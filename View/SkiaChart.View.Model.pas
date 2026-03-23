@@ -151,7 +151,6 @@ begin
   else
   begin
     FItems[LIndex].Value := AValue;
-    FItems[LIndex].Color := AColor;
   end;
   skChart.Redraw;
 end;

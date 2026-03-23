@@ -71,6 +71,7 @@ begin
   // Paint the slices based on the animation angle
   LStartAngle := CStartAngle;
   LCurrentAngle := 0;
+
   for i := 0 to High(FItems) do
   begin
     if not FItems[i].Enabled then
@@ -93,14 +94,18 @@ begin
         try
           LRect := TRectF.Create(LCenter.X - LRadius, LCenter.Y - LRadius, LCenter.X + LRadius, LCenter.Y + LRadius);
           LPathBuilder.MoveTo(LCenter); // Start from center
+
           if LDrawAngle >= 360 then
+          begin
             LPathBuilder.AddCircle(LCenter.X, LCenter.Y, LRadius)
+          end
           else
           begin
             LPathBuilder.ArcTo(LRect, LStartAngle, LDrawAngle, False); // Add arc
             LPathBuilder.LineTo(LCenter); // Back to center
             LPathBuilder.Close; // close path
           end;
+
           LPath := LPathBuilder.Detach;
           ACanvas.DrawPath(LPath, LPaint);
         finally
@@ -114,7 +119,11 @@ begin
     LCurrentAngle := LCurrentAngle + LSweepAngle;
   end;
 
-  UpdateLegend(FSelectedItem, LCenter, LRadius, LTotal);
+  try
+    UpdateLegend(FSelectedItem, LCenter, LRadius, LTotal);
+  except
+    
+  end;
 end;
 
 procedure TFrmSkiaChartPie.skChartMouseDown(Sender: TObject;
@@ -208,7 +217,11 @@ var
   LLabelPos: TPointF;
   i: Integer;
 begin
-  if (AIndex < 0) or (not FItems[AIndex].Enabled) then
+  if
+    (AIndex < 0) or
+    (Length(FItems) = 0) or
+    (not FItems[AIndex].Enabled)
+  then
   begin
     lytSelectedItem.Visible := False;
     tmrLabel.Enabled := False;
