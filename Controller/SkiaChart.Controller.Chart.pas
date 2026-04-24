@@ -59,7 +59,6 @@ type
     property Color: TAlphaColor read GetColor write SetColor;
     property Text: TLabel read FLbl;
     property &Index: Integer read FIndex write FIndex;
-
     { Public declarations }
   end;
 

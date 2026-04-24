@@ -1,4 +1,4 @@
-unit SkiaChart.View.Model;
+Ôªøunit SkiaChart.View.Model;
 
 interface
 
@@ -14,6 +14,8 @@ uses
   FMX.Layouts;
 
 type
+  TChartItemSelectedEvent = procedure(Sender: TObject; AIndex: Integer) of object;
+
   TFrmSkiaChartModel = class(TFrame)
     lytLegend: TLayout;
     skChart: TSkPaintBox;
@@ -40,6 +42,18 @@ type
     type
     TChartItem = SkiaChart.Controller.Chart.TChartItem;
   private
+    const
+    CLegendHeightBaseFactor = 25; // was 25 inline
+
+    var
+    FOnItemSelected: TChartItemSelectedEvent;
+
+    FCurrencySymbol: string;
+    FCurrencyFormat: string;
+
+    procedure SetSelectedItem(AValue: Integer);
+    function GetCurrencySymbol: string;
+    function GetCurrencyFormat: string;
     { Private declarations }
   protected
     const
@@ -56,15 +70,18 @@ type
         $FFE1F5FE,
         $FFFF4081 // Hot pink
       );
+
+      CTimerInterval = 16;    // was 3, see TODO20260422.md P4
     var
       FItems: TArray<TChartItem>;
-      FAnimationProgress: Single; // Progresso da animaÁ„o (0 a 1)
-      FAnimationSpeed: Single; // Velocidade da animaÁ„o
-      FSelectedItem: Integer; // Õndice da barra selecionada (-1 = nenhuma)
+      FAnimationProgress: Single; // Progresso da anima√ß√£o (0 a 1)
+      FAnimationSpeed: Single; // Velocidade da anima√ß√£o
+      FSelectedItem: Integer; // √çndice da barra selecionada (-1 = nenhuma)
       FObjLstLegend: TObjectList<TLayoutLegend>;
       FLegendSize: Single;
     procedure OnLegendTap(Sender: TObject; const APoint: TPointF); virtual;
     procedure SetLegendSize(const Value: Single); virtual;
+    procedure DoItemSelected; virtual;
 
     procedure DoChartDraw(ASender: TObject; const ACanvas: ISkCanvas; const ADest: TRectF; const AOpacity: Single); virtual; abstract;
     { Protected declarations }
@@ -75,7 +92,14 @@ type
     procedure Clear; virtual;
     procedure ItemAdd(AValue: Double; AText: string); overload; virtual;
     procedure ItemAdd(AValue: Double; AColor: TAlphaColor; AText: string); overload; virtual;
+
     property LegendSize: Single read FLegendSize write SetLegendSize;
+
+    property SelectedItem: Integer read FSelectedItem write SetSelectedItem;
+    property OnItemSelected: TChartItemSelectedEvent read FOnItemSelected write FOnItemSelected;
+
+    property CurrencySymbol: string read GetCurrencySymbol write FCurrencySymbol;
+    property CurrencyFormat: string read GetCurrencyFormat write FCurrencyFormat;
     { Public declarations }
   end;
 
@@ -95,6 +119,7 @@ begin
   try
     SetLength(FItems, 0);
     FObjLstLegend.Clear;
+    FSelectedItem := -1;
   finally
     skChart.OnDraw := skChartDraw;
     lytLegend.OnPainting := lytLegendPainting;
@@ -107,20 +132,35 @@ begin
   SetLength(FItems, 0);
   FLegendSize := 1;
   FObjLstLegend := TObjectList<TLayoutLegend>.Create;
+
+  CurrencySymbol := EmptyStr;
+  CurrencyFormat := EmptyStr;
 end;
 
 destructor TFrmSkiaChartModel.Destroy;
 begin
-  if Assigned(FObjLstLegend) then
-  begin
-    try
-      while FObjLstLegend.Count > 0 do
-        FObjLstLegend.ExtractAt(0);
-      FreeAndNil(FObjLstLegend);
-    except
-    end;
-  end;
+  FreeAndNil(FObjLstLegend); // No need to loop removing items, since Parent will forcedly free them
   inherited;
+end;
+
+procedure TFrmSkiaChartModel.DoItemSelected;
+begin
+  if Assigned(FOnItemSelected) then
+    FOnItemSelected(Self, FSelectedItem);
+end;
+
+function TFrmSkiaChartModel.GetCurrencyFormat: string;
+begin
+  Result := FCurrencyFormat;
+  if Result.Trim.IsEmpty then
+    Result := '##0' + FormatSettings.ThousandSeparator + FormatSettings.DecimalSeparator + '00';
+end;
+
+function TFrmSkiaChartModel.GetCurrencySymbol: string;
+begin
+  Result := FCurrencyFormat;
+  if Result.Trim.IsEmpty then
+    Result := FormatSettings.CurrencyString;
 end;
 
 procedure TFrmSkiaChartModel.ItemAdd(AValue: Double; AColor: TAlphaColor;
@@ -140,7 +180,8 @@ begin
     LIndex := Length(FItems);
     SetLength(FItems, Succ(LIndex));
     FItems[LIndex] := TChartItem.Create(AValue, AColor, AText);
-    var LLyt := TLayoutLegend.Create(Self);
+    var // Keep Owner=NIL, so the Parent will free the Layout
+    LLyt := TLayoutLegend.Create(nil);
     LLyt.Parent := lytLegend;
     LLyt.OnTap := OnLegendTap;
     LLyt.Text.Text := FItems[LIndex].Text;
@@ -157,9 +198,8 @@ end;
 
 procedure TFrmSkiaChartModel.ItemAdd(AValue: Double; AText: string);
 begin
-  var LIndex := Length(FItems);
-  if LIndex > Pred(Length(CAryColors)) then
-    LIndex := LIndex - Length(CAryColors);
+  var
+  LIndex := Length(FItems) mod Length(CAryColors);
   ItemAdd(AValue, CAryColors[LIndex], AText);
 end;
 
@@ -168,14 +208,13 @@ procedure TFrmSkiaChartModel.lytLegendPainting(Sender: TObject; Canvas: TCanvas;
 begin
   lytLegend.OnPainting := nil;
   try
-    var LHeightBase := 25 * FLegendSize;
+    var LHeightBase := CLegendHeightBaseFactor * FLegendSize;
     var LHeight := LHeightBase;
     var LPos: Single := 0;
     for var i := 0 to Pred(FObjLstLegend.Count) do
     begin
       var LLyt := FObjLstLegend[i];
       LLyt.LegendSize := FLegendSize;
-      lytLegend.Height := LHeightBase;
       var LPosNew := LPos + LLyt.Width;
       if LPosNew > (lytLegend.Width - 5) then
       begin
@@ -199,25 +238,27 @@ begin
 end;
 
 procedure TFrmSkiaChartModel.OnLegendTap(Sender: TObject; const APoint: TPointF);
+var
+  LIndex, LEnabledCount, i: Integer;
+  LIsDisabling: Boolean;
 begin
-  var LEnabledCount := 2;
-  if FItems[TLayoutLegend(Sender).&Index].Enabled then
+  LIndex := TLayoutLegend(Sender).&Index;
+  LIsDisabling := FItems[LIndex].Enabled;
+
+  if LIsDisabling then
   begin
     LEnabledCount := 0;
-    for var i := Low(FItems) to High(FItems) do
-    begin
+    for i := Low(FItems) to High(FItems) do
       if FItems[i].Enabled then
         Inc(LEnabledCount);
-      if LEnabledCount > 1 then
-        Break;
-    end;
+    if LEnabledCount <= 1 then
+      Exit; // refuse to disable the last visible item
   end;
-  if LEnabledCount > 1 then
-  begin
-    FItems[TLayoutLegend(Sender).&Index].Enabled := not FItems[TLayoutLegend(Sender).&Index].Enabled;
-    TMessageManager.DefaultManager.SendMessage(Sender, TMessagingItemEnabled.Create(TLayoutLegend(Sender).&Index, FItems[TLayoutLegend(Sender).&Index].Enabled));
-    skChart.Redraw;
-  end;
+
+  FItems[LIndex].Enabled := not FItems[LIndex].Enabled;
+  TMessageManager.DefaultManager.SendMessage(Sender,
+    TMessagingItemEnabled.Create(LIndex, FItems[LIndex].Enabled));
+  skChart.Redraw;
 end;
 
 procedure TFrmSkiaChartModel.rctSelectedItemBackgroundClick(Sender: TObject);
@@ -240,6 +281,14 @@ procedure TFrmSkiaChartModel.SetLegendSize(const Value: Single);
 begin
   FLegendSize := Value;
   lytLegend.Repaint;
+end;
+
+procedure TFrmSkiaChartModel.SetSelectedItem(AValue: Integer);
+begin
+  if FSelectedItem = AValue then
+    Exit;
+  FSelectedItem := AValue;
+  DoItemSelected;
 end;
 
 procedure TFrmSkiaChartModel.skChartDraw(ASender: TObject;

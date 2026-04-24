@@ -16,6 +16,7 @@ type
     const
       CBarSpacing = 10; // Espaçamento entre barras
       CBarMargin = 20; // Margem interna no gráfico
+      CInitialSpeed = 0.05;
 
     procedure UpdateLegend(AIndex: Integer; const ABarRects: TArray<TRectF> = []);
     { Private declarations }
@@ -101,19 +102,13 @@ begin
 
     // Desenhar a barra
     LPaint.Color := FItems[i].Color;
-    LPathBuilder := TSkPathBuilder.Create;
-    try
-      LPathBuilder.AddRect(LRect);
-      LPath := LPathBuilder.Detach;
-      ACanvas.DrawPath(LPath, LPaint);
-    finally
-      LPathBuilder := nil;
-    end;
+    ACanvas.DrawRect(LRect, LPaint);
+    // If rounded corners are ever needed, use `ACanvas.DrawRoundRect`.
 
     Inc(LCurrentIndex);
   end;
 
-  UpdateLegend(FSelectedItem, LBarRects);
+  UpdateLegend(SelectedItem, LBarRects);
 end;
 
 procedure TFrmSkiaChartBars.skChartMouseDown(Sender: TObject;
@@ -171,10 +166,10 @@ begin
     // Verificar se o clique está na faixa vertical da barra (apenas coordenada X)
     if (X >= LRect.Left) and (X <= LRect.Right) then
     begin
-      if i = FSelectedItem then
-        FSelectedItem := -1 // Desselecionar se clicar novamente
+      if i = SelectedItem then
+        SelectedItem := -1 // Desselecionar se clicar novamente
       else
-        FSelectedItem := i; // Selecionar a barra
+        SelectedItem := i; // Selecionar a barra
       LSelectedFound := True;
       Break;
     end;
@@ -184,16 +179,16 @@ begin
 
   // Desselecionar se o clique estiver fora das faixas verticais de todas as barras
   if not LSelectedFound then
-    FSelectedItem := -1;
+    SelectedItem := -1;
 
-  UpdateLegend(FSelectedItem, LBarRects);
+  UpdateLegend(SelectedItem, LBarRects);
   skChart.Redraw;
 end;
 
 procedure TFrmSkiaChartBars.StartAnimation;
 begin
-  FAnimationSpeed := 0.05;
-  tmrAnimation.Interval := 16;
+  FAnimationSpeed := CInitialSpeed;
+  tmrAnimation.Interval := CTimerInterval;
   inherited;
 end;
 
@@ -217,7 +212,11 @@ var
   LRect: TRectF;
   LBarRectsLocal: TArray<TRectF>;
 begin
-  if (AIndex < 0) or (AIndex >= Length(FItems)) or (not FItems[AIndex].Enabled) then
+  if
+    (AIndex < 0) or
+    (AIndex >= Length(FItems)) or
+    (not FItems[AIndex].Enabled)
+  then
   begin
     lytSelectedItem.Visible := False;
     tmrLabel.Enabled := False;
@@ -283,9 +282,14 @@ begin
     begin
       LRect := LBarRectsLocal[LCurrentIndex];
       lblSelectedItemText.Text := FItems[i].Text;
-      lblSelectedItemValue.Text := 'R$ ' + FormatFloat('##0.,00', FItems[i].Value);
+
+      lblSelectedItemValue.Text := EmptyStr;
+      if not CurrencySymbol.Trim.IsEmpty then
+        lblSelectedItemValue.Text := CurrencySymbol + ' ';
+      lblSelectedItemValue.Text := lblSelectedItemValue.Text + FormatFloat(CurrencyFormat, FItems[i].Value);
+
       var LPosX := LRect.Left + (LRect.Width - lytSelectedItem.Width) / 2;
-      var LPosY := LRect.Top - lytSelectedItem.Height - 10;
+      var LPosY := LRect.Top - lytSelectedItem.Height - CBarSpacing;
       var LColor := FItems[i].Color;
 
       tmrLabel.Enabled := False;
