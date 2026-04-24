@@ -69,6 +69,7 @@ begin
   FFrmChart.Align := TAlignLayout.Client;
   FFrmChart.Margins.Top := 10;
 
+  TFrmSkiaChartModel(FFrmChart).LegendSize := tbarLegendSize.Value / 100;
   TFrmSkiaChartModel(FFrmChart).Clear;
   TFrmSkiaChartModel(FFrmChart).ItemAdd(32415, 'Category 1');
   TFrmSkiaChartModel(FFrmChart).ItemAdd(10000, 'Category 2');
@@ -82,6 +83,7 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  FFrmChart := nil;
   for var LItem := Low(ChartType) to High(ChartType) do
   begin
     cbxChartType.Items.Add(GetEnumName(TypeInfo(ChartType), Ord(LItem)));
@@ -91,7 +93,8 @@ end;
 
 procedure TForm1.tbarLegendSizeChange(Sender: TObject);
 begin
-  TFrmSkiaChartModel(FFrmChart).LegendSize := tbarLegendSize.Value / 100;
+  if Assigned(FFrmChart) then
+    TFrmSkiaChartModel(FFrmChart).LegendSize := tbarLegendSize.Value / 100;
   lblLegendSize.Text := 'Legend size: ' + tbarLegendSize.Value.ToString;
 end;
 

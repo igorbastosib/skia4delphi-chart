@@ -16,6 +16,10 @@ type
   private
     const
     CStartAngle = 270; // Start from 270 (12 hours)
+    CRadiusFactor = 0.8;   // was 0.8 inline, correspond of 80% of current size
+    CLabelRadiusFactor = 0.7;  // was 0.7 inline
+    CAccelerationRate = 1.02;  // was 1.05 inline, see TODO20260422.md P4 (extra info)
+    CInitialSpeed = 5;
 
     procedure UpdateLegend(AIndex: Integer; ACenter: TPointF; ARadius: Single; ATotal: Single);
     { Private declarations }
@@ -53,7 +57,7 @@ begin
   // inherited;
   // Center and radius of chart
   LCenter := TPointF.Create(ADest.Width / 2, ADest.Height / 2);
-  LRadius := Min(ADest.Width, ADest.Height) / 2 * 0.8; // 80% of current size
+  LRadius := Min(ADest.Width, ADest.Height) / 2 * CRadiusFactor;
 
   // Sum of enabled values
   LTotal := 0;
@@ -119,11 +123,7 @@ begin
     LCurrentAngle := LCurrentAngle + LSweepAngle;
   end;
 
-  try
-    UpdateLegend(FSelectedItem, LCenter, LRadius, LTotal);
-  except
-    
-  end;
+  UpdateLegend(SelectedItem, LCenter, LRadius, LTotal);
 end;
 
 procedure TFrmSkiaChartPie.skChartMouseDown(Sender: TObject;
@@ -131,7 +131,7 @@ procedure TFrmSkiaChartPie.skChartMouseDown(Sender: TObject;
 var
   LCenter: TPointF;
   LRadius: Single;
-  LTotal, LCurrentAngle, LSweepAngle: Single;
+  LTotal, LSweepAngle: Single;
   LAngle: Single;
   LDistance: Single;
   LSlice: TChartItem;
@@ -140,7 +140,7 @@ begin
   inherited;
   // Check the center and radius
   LCenter := TPointF.Create(skChart.Width / 2, skChart.Height / 2);
-  LRadius := Min(skChart.Width, skChart.Height) / 2 * 0.8;
+  LRadius := Min(skChart.Width, skChart.Height) / 2 * CRadiusFactor;
 
   // Calculate the Clicked angle based on the center
   LAngle := ArcTan2(Y - LCenter.Y, X - LCenter.X) * 180 / Pi;
@@ -152,18 +152,18 @@ begin
   if LAngle < 0 then
     LAngle := LAngle + 360;
 
+  // Sum of enabled values
+  LTotal := 0;
   // Check if the click is in the chart radius
   LDistance := Sqrt(Sqr(X - LCenter.X) + Sqr(Y - LCenter.Y));
   if LDistance <= LRadius then
   begin
-    // Sum of enabled values
-    LTotal := 0;
     for LSlice in FItems do
       if LSlice.Enabled then
         LTotal := LTotal + LSlice.Value;
 
-    // Find the clicked slice
-    LCurrentAngle := 0;
+    var // Find the clicked slice
+    LCurrentAngle : Single := 0;
     for i := 0 to High(FItems) do
     begin
       if not FItems[i].Enabled then
@@ -171,42 +171,42 @@ begin
       LSweepAngle := (FItems[i].Value / LTotal) * 360;
       if (LAngle >= LCurrentAngle) and (LAngle < LCurrentAngle + LSweepAngle) then
       begin
-        if i = FSelectedItem then
-          FSelectedItem := -1 // Deselect if second click
+        if i = SelectedItem then
+          SelectedItem := -1 // Deselect if second click
         else
-          FSelectedItem := i; // Select the slice
+          SelectedItem := i; // Select the slice
         Break;
       end;
       LCurrentAngle := LCurrentAngle + LSweepAngle;
     end;
-    UpdateLegend(FSelectedItem, LCenter, LRadius, LTotal);
+    UpdateLegend(SelectedItem, LCenter, LRadius, LTotal);
     skChart.Redraw;
   end
   else
   begin
-    FSelectedItem := -1; // Deselect
-    UpdateLegend(FSelectedItem, LCenter, LRadius, LTotal);
+    SelectedItem := -1; // Deselect
+    UpdateLegend(SelectedItem, LCenter, LRadius, LTotal);
   end;
 end;
 
 procedure TFrmSkiaChartPie.StartAnimation;
 begin
-  FAnimationSpeed := 5;
-  tmrAnimation.Interval := 3;
+  FAnimationSpeed := CInitialSpeed;
+  tmrAnimation.Interval := CTimerInterval;
   inherited;
 end;
 
 procedure TFrmSkiaChartPie.tmrAnimationTimer(Sender: TObject);
 begin
-  inherited;
   FAnimationProgress := FAnimationProgress + FAnimationSpeed;
   if FAnimationProgress >= 360 then
   begin
-    tmrAnimation.Enabled := False; // Stop animation
-    FAnimationProgress := 360; // Full circle
-  end;
-  FAnimationSpeed := FAnimationSpeed * 1.05;
-  skChart.Redraw;
+    tmrAnimation.Enabled := False;
+    FAnimationProgress := 360;
+  end
+  else
+    FAnimationSpeed := FAnimationSpeed * CAccelerationRate;
+  skChart.Redraw; // always runs, final frame draws correctly
 end;
 
 procedure TFrmSkiaChartPie.UpdateLegend(AIndex: Integer; ACenter: TPointF;
@@ -219,7 +219,7 @@ var
 begin
   if
     (AIndex < 0) or
-    (Length(FItems) = 0) or
+    (AIndex >= Length(FItems)) or
     (not FItems[AIndex].Enabled)
   then
   begin
@@ -240,11 +240,15 @@ begin
     begin
       LAngle := DegToRad(LStartAngle + LSweepAngle / 2);
       LLabelPos := TPointF.Create(
-        ACenter.X + Cos(LAngle) * ARadius * 0.7,
-        ACenter.Y + Sin(LAngle) * ARadius * 0.7
+        ACenter.X + Cos(LAngle) * ARadius * CLabelRadiusFactor,
+        ACenter.Y + Sin(LAngle) * ARadius * CLabelRadiusFactor
         );
       lblSelectedItemText.Text := FItems[i].Text;
-      lblSelectedItemValue.Text := 'R$ ' + FormatFloat('##0.,00', FItems[i].Value);
+
+      lblSelectedItemValue.Text := EmptyStr;
+      if not CurrencySymbol.Trim.IsEmpty then
+        lblSelectedItemValue.Text := CurrencySymbol + ' ';
+      lblSelectedItemValue.Text := lblSelectedItemValue.Text + FormatFloat(CurrencyFormat, FItems[i].Value);
       var
       LPosX := LLabelPos.X - lytSelectedItem.Width / 2; // Horizontal center
       var
