@@ -37,12 +37,14 @@ type
     const
     FRectColorWidth = 35;
     FRectColorHeight = 20;
+
     var
     FRectColor: TRectangle;
     FLbl: TLabel;
     FIndex: Integer;
     FLegendSize: Single;
 
+    procedure SetLegendSize(const Value: Single);
     function GetColor: TAlphaColor;
     procedure SetColor(const Value: TAlphaColor);
     { Private declarations }
@@ -55,7 +57,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
-    property LegendSize: Single read FLegendSize write FLegendSize;
+    property LegendSize: Single read FLegendSize write SetLegendSize;
     property Color: TAlphaColor read GetColor write SetColor;
     property Text: TLabel read FLbl;
     property &Index: Integer read FIndex write FIndex;
@@ -66,6 +68,8 @@ implementation
 
 uses
   System.Types,
+  System.Math,
+
   FMX.Controls,
   FMX.Types,
   FMX.Graphics;
@@ -166,15 +170,25 @@ end;
 procedure TLayoutLegend.Painting;
 begin
   inherited;
-  TControl(FRectColor.Parent).Width := FRectColorWidth * FLegendSize;
-  FRectColor.Height := FRectColorHeight * FLegendSize;
-  FLbl.TextSettings.Font.Size := 12 * FLegendSize;
-  Width := FLbl.Position.X + FLbl.Width + 10;
+  var LNewWidth := FLbl.Position.X + FLbl.Width + 10;
+  if not SameValue(Width, LNewWidth) then
+    Width := LNewWidth;
 end;
 
 procedure TLayoutLegend.SetColor(const Value: TAlphaColor);
 begin
   FRectColor.Fill.Color := Value;
+end;
+
+procedure TLayoutLegend.SetLegendSize(const Value: Single);
+begin
+  if SameValue(FLegendSize, Value) then
+    Exit;
+  FLegendSize := Value;
+  TControl(FRectColor.Parent).Width := FRectColorWidth * Value;
+  FRectColor.Height := FRectColorHeight * Value;
+  FLbl.TextSettings.Font.Size := 12 * Value;
+  // Intentionally NOT setting Width here — FLbl.Width is stale until next paint.
 end;
 
 end.

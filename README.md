@@ -61,7 +61,7 @@ Check my other links: <https://linktr.ee/igorbastosib>
 
 Help me keep my almost great work!
 
-<img src="https://i.imgur.com/m6XraH3.png" alt="Donation QR code" width="200" />
+<img src="https://i.imgur.com/G1Gx14O.png" alt="Donation QR code" width="200" />
 
 ## ⚠️ License
 
