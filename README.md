@@ -23,6 +23,32 @@ Drop a chart frame into your FMX form, feed it data, and get a fully animated, i
 
 ---
 
+## Roadmap
+
+Contributions and ideas are welcome. Current backlog, roughly in priority order:
+
+### Planned
+| Status | Title | Description | ToDo.md? |
+|---|---|---|---|
+| | **More chart types** | To add more chart types as Line, Area, Donut |  |
+| | **vsync-aligned animation** | To migrate from `TTimer` to `TSkAnimatedPaintBox` for smoother animation and lower CPU use | [`TODO20260422.md`](Past%20ToDos/TODO20260422.md) — A4 |
+|  | **Per-item removal** | `RemoveItem(AIndex)` without a full `Clear` |  |
+| | **Tapping legend change behaviour** | Tapping on Legend Box add the PopUp on selected item (keep the hid/show while tapping on Legend label) |  |
+| | **Pie with same first and last colors** | To avoid same colors on Pie Chart for the first and last item |  |
+| | **PopUp value, small/big screen** | Showing PopUp value must respect the limit Width (left, right) and Height (top, bottom); If small screen, as Mobile, selecting the most left or right, cuts part of the PopUp value; If highest value is selected, PopValue might cover the Legend; |  |
+
+### Under consideration
+| Status | Title | Description | ToDo.md? |
+|---|---|---|---|
+| | **Data model / view separation** | decouple `TChartDataSet` from the FMX frame so chart data can be managed and tested independently of the UI | [`TODO20260422.md`](Past%20ToDos/TODO20260422.md) — A2  |
+| | **Theming** | expose a `TLegendStyle` record for font, color-rect size, and spacing without subclassing | |
+
+### Known limitations
+- No built-in support for negative values or dual axes
+- Color palette cycles through 11 built-in colors; adding 22+ items repeats colors with no visual distinction between cycles
+
+---
+
 ## Quick Start
 
 ```delphi
