@@ -14,7 +14,7 @@ object Form1: TForm1
     Size.Width = 640.000000000000000000
     Size.Height = 50.000000000000000000
     Size.PlatformDefault = False
-    TabOrder = 0
+    TabOrder = 1
     TabStop = False
     object Button1: TButton
       Align = Center
@@ -83,6 +83,128 @@ object Form1: TForm1
         Position.Y = 8.000000000000000000
         Text = 'Legend size:'
         TabOrder = 1
+      end
+    end
+  end
+  object Layout2: TLayout
+    Align = Top
+    Position.Y = 50.000000000000000000
+    Size.Width = 640.000000000000000000
+    Size.Height = 50.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    TabStop = False
+    object Layout3: TLayout
+      Align = Left
+      Padding.Left = 10.000000000000000000
+      Padding.Top = 5.000000000000000000
+      Size.Width = 177.000000000000000000
+      Size.Height = 50.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      TabStop = False
+      object NumberBox1: TNumberBox
+        Touch.InteractiveGestures = [LongTap, DoubleTap]
+        Align = Top
+        TabOrder = 2
+        Cursor = crIBeam
+        Max = 999999999.000000000000000000
+        ValueType = Float
+        KeyboardType = NumbersAndPunctuation
+        Position.X = 10.000000000000000000
+        Position.Y = 22.000000000000000000
+        Size.Width = 167.000000000000000000
+        Size.Height = 22.000000000000000000
+        Size.PlatformDefault = False
+      end
+      object Label3: TLabel
+        Align = Top
+        Position.X = 10.000000000000000000
+        Position.Y = 5.000000000000000000
+        Size.Width = 167.000000000000000000
+        Size.Height = 17.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Value'
+        TabOrder = 1
+        TabStop = False
+      end
+    end
+    object Layout4: TLayout
+      Align = Left
+      Padding.Left = 10.000000000000000000
+      Padding.Top = 5.000000000000000000
+      Position.X = 177.000000000000000000
+      Size.Width = 177.000000000000000000
+      Size.Height = 50.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      TabStop = False
+      object Label2: TLabel
+        Align = Top
+        Position.X = 10.000000000000000000
+        Position.Y = 5.000000000000000000
+        Size.Width = 167.000000000000000000
+        Size.Height = 17.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Chart Type'
+        TabOrder = 1
+        TabStop = False
+      end
+      object ComboColorBox1: TComboColorBox
+        Align = Top
+        Color = claNull
+        Margins.Right = 55.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 22.000000000000000000
+        Size.Width = 112.000000000000000000
+        Size.Height = 22.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 2
+        object Button4: TButton
+          Position.X = 115.000000000000000000
+          Size.Width = 40.000000000000000000
+          Size.Height = 22.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 86
+          TabStop = False
+          Text = 'Null'
+          TextSettings.Trimming = None
+          OnClick = Button4Click
+        end
+      end
+    end
+    object GridLayout1: TGridLayout
+      Align = Client
+      ItemHeight = 50.000000000000000000
+      ItemWidth = 64.000000000000000000
+      Orientation = Horizontal
+      Size.Width = 286.000000000000000000
+      Size.Height = 50.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      object Button2: TButton
+        Align = Center
+        CanFocus = False
+        Size.Width = 64.000000000000000000
+        Size.Height = 50.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        TabStop = False
+        Text = 'Add'
+        TextSettings.Trimming = None
+        OnClick = Button2Click
+      end
+      object Button3: TButton
+        Align = Center
+        CanFocus = False
+        Size.Width = 64.000000000000000000
+        Size.Height = 50.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        TabStop = False
+        Text = 'Re-Paint'
+        TextSettings.Trimming = None
+        OnClick = Button3Click
       end
     end
   end

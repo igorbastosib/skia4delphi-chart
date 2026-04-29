@@ -8,7 +8,8 @@ uses
   SkiaChart.Controller.Chart in '..\..\Controller\SkiaChart.Controller.Chart.pas',
   SkiaChart.View.Model in '..\..\View\SkiaChart.View.Model.pas' {FrmSkiaChartModel: TFrame},
   SkiaChart.View.Bars in '..\..\View\SkiaChart.View.Bars.pas' {FrmSkiaChartBars: TFrame},
-  SkiaChart.View.Pie in '..\..\View\SkiaChart.View.Pie.pas' {FrmSkiaChartPie: TFrame};
+  SkiaChart.View.Pie in '..\..\View\SkiaChart.View.Pie.pas' {FrmSkiaChartPie: TFrame},
+  SkiaChart.View.SparkLine in '..\..\View\SkiaChart.View.SparkLine.pas' {FrmSkiaChartSparkLine: TFrame};
 
 {$R *.res}
 

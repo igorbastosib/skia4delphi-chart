@@ -290,22 +290,24 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="FormMain.pas">
+        <DCCReference Include="..\FormMain.pas">
             <Form>Form1</Form>
-            <FormType>fmx</FormType>
         </DCCReference>
-        <DCCReference Include="Controller\SkiaChart.Controller.Chart.pas"/>
-        <DCCReference Include="View\SkiaChart.View.Model.pas">
+        <DCCReference Include="..\..\Controller\SkiaChart.Controller.Chart.pas"/>
+        <DCCReference Include="..\..\View\SkiaChart.View.Model.pas">
             <Form>FrmSkiaChartModel</Form>
-            <FormType>fmx</FormType>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
-        <DCCReference Include="View\SkiaChart.View.Bars.pas">
+        <DCCReference Include="..\..\View\SkiaChart.View.Bars.pas">
             <Form>FrmSkiaChartBars</Form>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
-        <DCCReference Include="View\SkiaChart.View.Pie.pas">
+        <DCCReference Include="..\..\View\SkiaChart.View.Pie.pas">
             <Form>FrmSkiaChartPie</Form>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
+        <DCCReference Include="..\..\View\SkiaChart.View.SparkLine.pas">
+            <Form>FrmSkiaChartSparkLine</Form>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
         <BuildConfiguration Include="Base">

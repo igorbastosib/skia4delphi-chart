@@ -15,6 +15,7 @@ uses
 
 type
   TChartItemSelectedEvent = procedure(Sender: TObject; AIndex: Integer) of object;
+  TFrmSkiaChartModelClass = class of TFrmSkiaChartModel;
 
   TFrmSkiaChartModel = class(TFrame)
     lytLegend: TLayout;
@@ -90,8 +91,13 @@ type
     destructor Destroy; override;
     procedure StartAnimation; virtual;
     procedure Clear; virtual;
+    procedure CopyItemsFrom(ASource: TFrmSkiaChartModel);
+    class procedure SwitchType(var AChart: TFrmSkiaChartModel;
+      ANewClass: TFrmSkiaChartModelClass; AOwner: TComponent);
+
     procedure ItemAdd(AValue: Double; AText: string); overload; virtual;
     procedure ItemAdd(AValue: Double; AColor: TAlphaColor; AText: string); overload; virtual;
+    function ItemsCount: Integer;
 
     property LegendSize: Single read FLegendSize write SetLegendSize;
 
@@ -111,6 +117,45 @@ uses
 {$R *.fmx}
 
 { TBarItem }
+
+procedure TFrmSkiaChartModel.CopyItemsFrom(ASource: TFrmSkiaChartModel);
+var
+  i: Integer;
+begin
+  Clear;
+  for i := 0 to High(ASource.FItems) do
+    ItemAdd(ASource.FItems[i].Value, ASource.FItems[i].Color, ASource.FItems[i].Text);
+  // ItemAdd always creates items with Enabled=True; restore the original toggle state
+  for i := 0 to High(FItems) do
+    FItems[i].Enabled := ASource.FItems[i].Enabled;
+  LegendSize := ASource.FLegendSize;
+end;
+
+class procedure TFrmSkiaChartModel.SwitchType(var AChart: TFrmSkiaChartModel;
+  ANewClass: TFrmSkiaChartModelClass; AOwner: TComponent);
+var
+  LNew: TFrmSkiaChartModel;
+begin
+  if Assigned(AChart) and (AChart.ClassType = ANewClass) then
+  begin
+    AChart.StartAnimation; // already the right type — just re-animate
+    Exit;
+  end;
+
+  LNew := ANewClass.Create(AOwner);
+
+  if Assigned(AChart) then
+  begin
+    LNew.CopyItemsFrom(AChart);       // transfer data + legend state + LegendSize
+    LNew.Parent := AChart.Parent;
+    LNew.Align  := AChart.Align;
+    LNew.Margins.Rect := AChart.Margins.Rect;
+    AChart.Free;
+  end;
+
+  AChart := LNew;
+  AChart.StartAnimation;
+end;
 
 procedure TFrmSkiaChartModel.Clear;
 begin
@@ -194,6 +239,11 @@ begin
     FItems[LIndex].Value := AValue;
   end;
   skChart.Redraw;
+end;
+
+function TFrmSkiaChartModel.ItemsCount: Integer;
+begin
+  Result := Length(FItems);
 end;
 
 procedure TFrmSkiaChartModel.ItemAdd(AValue: Double; AText: string);
